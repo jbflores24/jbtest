@@ -1,121 +1,54 @@
-# Testing Guide
+# Pruebas
 
-JB Framework includes a PHPUnit 11 test suite for the framework itself and also generates test files for scaffolded projects.
+`jbtest` usa PHPUnit y un flujo pequeño orientado a benchmarks.
 
-## Run the suite
+## Por qué este esquema de pruebas
+
+Las pruebas no buscan cubrir todos los casos de un producto completo. Buscan validar que el testbed siga siendo estable, repetible y comparable. Por eso el enfoque se centra en tres cosas:
+
+- que la base arranque de forma consistente;
+- que la seguridad se pueda activar, desactivar y medir;
+- que los datos sintéticos se puedan reconstruir sin fricción.
+
+## Suites disponibles
+
+- `phpunit.xml`
+- `tests/Unit`
+- `tests/Integration`
+- `tests/Benchmark`
+
+`phpunit.xml` arranca PHPUnit con `vendor/autoload.php` y usa SQLite en memoria para la ejecución de pruebas.
+
+## Qué debería probar cada suite
+
+- `Unit`: piezas aisladas, sin depender de la base de datos real del proyecto.
+- `Integration`: comportamiento entre controladores, servicios y base de datos.
+- `Benchmark`: flujos orientados a medición, comparación y repetición.
+
+## Comandos comunes
 
 ```bash
 composer test
-```
-
-The current repository suite finishes with:
-
-```bash
-OK (13 tests, 29 assertions)
-```
-
-To run only a subset:
-
-```bash
 composer test-unit
 composer test-integration
 ```
 
-## Test layout
+## Ciclo de benchmark
 
-```text
-tests/
-|-- BaseTestCase.php
-|-- Benchmark/
-|-- Integration/
-`-- Unit/
-```
+1. Sembrar los datos sintéticos.
+2. Llamar a `GET /health` para medir la línea base.
+3. Llamar a `GET /health-secured` para medir la ruta asegurada.
+4. Usar `POST /security/test/trigger` para ejercitar los detectores.
+5. Usar `POST /admin/reset-security` antes de la siguiente repetición.
 
-The `Benchmark/` directory is reserved for benchmark checks.
+## Qué verificar
 
-## Base test case
+- El endpoint base debe mantenerse ligero y predecible.
+- El endpoint asegurado debe incluir el contexto de autenticación.
+- El endpoint de validación pública debe hacer el `JOIN` entre `items` e `item_categorias`.
+- Los endpoints de despliegue solo deben aceptar los seeders permitidos.
+- Los cambios en seguridad deben reflejarse en la medición, no romper el flujo.
 
-`tests/BaseTestCase.php` is a shared base class for framework tests. It currently extends `PHPUnit\Framework\TestCase` and does not add extra helpers yet.
+## Resultado esperado
 
-## Current coverage
-
-The suite currently covers the main framework areas, including:
-
-- Core HTTP objects
-- Configuration
-- Database and repositories
-- Authentication and JWT
-- Routing
-- Validation
-- Security and bootstrap checks
-
-## Writing tests
-
-Use one responsibility per test and keep the assertions focused.
-
-Example unit test:
-
-```php
-<?php
-
-declare(strict_types=1);
-
-namespace Tests\Unit;
-
-use Jb\Tests\BaseTestCase;
-
-class ExampleTest extends BaseTestCase
-{
-    public function test_example(): void
-    {
-        $this->assertTrue(true);
-    }
-}
-```
-
-Example integration test with SQLite in memory:
-
-```php
-<?php
-
-declare(strict_types=1);
-
-namespace Tests\Integration;
-
-use Jb\Tests\BaseTestCase;
-
-class ExampleIntegrationTest extends BaseTestCase
-{
-    public function test_database_ready(): void
-    {
-        $pdo = new \PDO('sqlite::memory:');
-        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-
-        $this->assertInstanceOf(\PDO::class, $pdo);
-    }
-}
-```
-
-## Scaffolded projects
-
-When you run `make:scaffold <Name>`, the generated project includes:
-
-- `tests/Unit/<Name>UnitTest.php`
-- `tests/Integration/<Name>ScaffoldTest.php`
-
-## PHPUnit configuration
-
-The repository uses `phpunit.xml` with these suites:
-
-- `Unit`
-- `Integration`
-- `Benchmark`
-
-The integration suite uses SQLite in memory (`:memory:`) by default, so it does not require an external database server.
-
-## Good practices
-
-- Keep unit tests isolated.
-- Use SQLite in memory for integration tests when possible.
-- Clean shared state in `tearDown()` when a test changes global configuration.
-- Avoid external services in the main suite.
+Una documentación de pruebas útil no solo dice cómo ejecutar comandos. También deja claro por qué el testbed usa SQLite en memoria, por qué existen rutas de reseteo y por qué separamos la línea base de la ruta asegurada.

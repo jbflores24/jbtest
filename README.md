@@ -1,97 +1,49 @@
-# JB Framework
+# jbtest
 
-JB Framework is a lightweight PHP 8.2 framework for JSON REST APIs.
-It focuses on clear code, security by default, and a small core that is easy to audit.
+`jbtest` es un banco de pruebas en PHP 8.2 construido para medir, comparar y repetir escenarios sobre la capa de seguridad, el flujo de autenticación, el CRUD de items y los helpers de despliegue sin shell.
 
-## What it includes
+La idea del repositorio no es parecer una aplicación final, sino servir como una base controlada para pruebas reales. Por eso el alcance es pequeño, los datos son sintéticos y las rutas están pensadas para ser predecibles.
 
-- HTTP core with Router, Request, Response, Container and HttpException
-- PDO database layer with QueryBuilder, BaseRepository, migrations and seeders
-- JWT authentication and permission middleware
-- Security module with threat detection, scoring, allowlists and denylists
-- File cache, logger, mailer, rate limiting and validation utilities
-- CLI for project creation, scaffolding, migrations, seeders and docs generation
-- PHPUnit 11 test suite with unit and integration coverage
+## Por qué existe
 
-## What it does not include
+Este proyecto se mantiene separado del framework base por una razón práctica: permite experimentar sin contaminar el código del producto principal. Eso hace más fácil responder preguntas como:
 
-- HTML templating
-- ORM such as Eloquent
-- Queues, jobs or workers
-- WebSockets
-- Built-in event system
-- File upload storage layer
-- OAuth or social login
-- Admin UI
-- Multi-tenancy
-- Internationalization
+- cuánto cuesta pasar por el middleware de seguridad;
+- qué cambia cuando una ruta se ejecuta con o sin autenticación;
+- cómo se comporta el rate limit bajo carga;
+- qué tan repetible es un despliegue en un entorno sin acceso por SSH.
 
-## Requirements
+## Qué incluye
 
-- PHP 8.2 or newer
-- Composer 2 or newer
-- PDO extension and a supported database driver
-- A web server with URL rewriting support
+- `GET /health` como verificación base sin middleware de seguridad.
+- `GET /health-secured` con autenticación y validaciones de seguridad.
+- Inicio y cierre de sesión con JWT.
+- CRUD de items protegido por autenticación.
+- Validación pública de items por UUID con `JOIN` a `item_categorias`.
+- Endpoints de prueba y reseteo de seguridad para benchmarks.
+- Helpers de despliegue por HTTP para escenarios de hosting compartido.
 
-## Install the framework
+## Inicio rápido
 
 ```bash
-git clone https://github.com/jbflores24/jb-framework.git jb
-cd jb
 composer install
-composer test
+php bin/jb migrate
+php bin/jb seed RoleSeeder
+php bin/jb seed UserSeeder
+php bin/jb seed ItemCategoriaSeeder
+php bin/jb seed ItemSeeder
 ```
 
-## Create a new project
+Si el entorno no permite acceso por shell, usa los endpoints de despliegue definidos en `routes/api.php` junto con `DEPLOY_TOKEN`.
 
-```bash
-php bin/jb new mi_api
-cd mi_api
-composer install
-```
+## Cómo leer la documentación
 
-Then start the local server:
+- [TESTBED.md](TESTBED.md) resume el propósito experimental y el flujo recomendado.
+- [docs/architecture.md](docs/architecture.md) explica cómo se organiza el sistema y por qué.
+- [docs/configuration.md](docs/configuration.md) lista las variables relevantes y su función.
+- [docs/endpoints.md](docs/endpoints.md) documenta las rutas expuestas.
+- [docs/testing.md](docs/testing.md) describe cómo se prueban y comparan los escenarios.
 
-```bash
-php jb serve
-```
+## Alcance
 
-## Generate a resource
-
-```bash
-php jb make:scaffold Producto
-php jb migrate
-php jb seed Producto
-php jb test
-```
-
-The scaffold command creates the controller, model, migration, seeder, unit test, integration test, route block, security permission and audit entry.
-
-## Documentation
-
-- [Quickstart](docs/QUICKSTART.md)
-- [CLI reference](docs/CLI_REFERENCE.md)
-- [Project structure](docs/PROJECT_STRUCTURE.md)
-- [Configuration](docs/CONFIGURATION.md)
-- [Testing](docs/TESTING.md)
-- [Deployment](docs/DEPLOYMENT.md)
-- [Performance](docs/PERFORMANCE.md)
-- [Roadmap](docs/ROADMAP.md)
-- [Community](docs/COMMUNITY.md)
-- [Internal index](docs/INDEX.md)
-- [Benchmark documentation](docs/benchmarks/README.md)
-
-## Example project
-
-The `examples/demo_api/` directory contains a lightweight example structure for reference.
-
-To create a runnable project, use the CLI from the framework root:
-
-```bash
-php bin/jb new mi_api
-cd mi_api
-composer install
-```
-
-MIT License.
-
+Todo lo que se documenta aquí debe existir en `routes/api.php`, `config/`, `database/` o `tests/`. Si una ruta, tabla o variable no está en el código actual, no se debe asumir como parte del testbed.

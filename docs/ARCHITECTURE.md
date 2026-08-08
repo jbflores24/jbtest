@@ -1,173 +1,78 @@
 # Arquitectura
 
-# Arquitectura interna
+`jbtest` está organizado como un banco de pruebas pequeño para una API con tres capas principales:
 
-Este documento describe las decisiones de diseño, la organización por capas y el flujo de ejecución del framework.
+- Entrada HTTP y rutas en `public/index.php` y `routes/api.php`
+- Controladores de aplicación en `app/Controllers`
+- Servicios del framework y de seguridad en `src/`
 
----
+## Por qué esta arquitectura
 
-## Principios de diseño
+La arquitectura es simple a propósito. Para medir bien un componente, conviene reducir al mínimo todo lo que lo rodea. Si la base fuera más compleja, el benchmark mezclaría demasiadas variables al mismo tiempo.
 
-- **Sin magia implícita**: cada comportamiento es explícito y rastreable desde el código.
-- **Dependencias mínimas**: el framework no requiere ningún paquete de terceros en producción.
-- **Solo JSON**: no hay motor de plantillas ni renderizado HTML; todas las respuestas son `application/json`.
-- **Tipado estricto**: todos los archivos PHP usan `declare(strict_types=1)`.
-- **Testeable desde el núcleo**: el diseño permite inyectar dependencias en cualquier nivel.
+Con esta separación se consigue:
 
----
+- una entrada HTTP clara y fácil de reproducir;
+- controladores delgados, centrados en la intención del endpoint;
+- servicios de seguridad reutilizables y aislados;
+- datos y rutas fáciles de reiniciar entre corridas.
 
-## Capas del framework
+## Flujo de una petición
 
-```
-┌─────────────────────────────────────────────────┐
-│                   CLI (Console)                 │
-│        new / make:* / migrate / seed / test     │
-├─────────────────────────────────────────────────┤
-│                   Core HTTP                     │
-│     Router → Middleware → Controller → Response │
-├──────────────────┬──────────────────────────────┤
-│    Auth / JWT    │   Security Module            │
-├──────────────────┼──────────────────────────────┤
-│    Database      │   Validation / Cache / Log   │
-│  PDO · QB · Repo │                              │
-└──────────────────┴──────────────────────────────┘
-```
+1. El front controller arranca la aplicación.
+2. Las rutas se registran desde `routes/api.php`.
+3. El middleware se aplica donde corresponde, especialmente en las rutas protegidas.
+4. Los controladores leen la petición y hablan con la capa de base de datos.
+5. La respuesta se devuelve en formato JSON.
 
-### Core (`src/Core/`)
+## Capa de seguridad
 
-Contiene los componentes fundamentales del ciclo de vida HTTP:
+El subsistema de seguridad se controla desde `config/security.php` y desde el middleware en `src/Security`.
 
-- **`Application`**: inicializa configuración, contenedor y router; captura excepciones globales.
-- **`Router`**: registro de rutas con soporte de grupos, prefijos y pilas de middleware. Resuelve por método + patrón de URL con soporte de parámetros dinámicos (`/api/productos/{id}`).
-- **`Request`**: encapsula `$_SERVER`, `$_GET`, `$_POST` y el cuerpo JSON. Proporciona acceso tipado a parámetros.
-- **`Response`**: construye y envía respuestas JSON con código HTTP y cabeceras CORS.
-- **`Container`**: contenedor de inyección de dependencias ligero. Registra singletons y fábricas.
-- **`Config`**: carga archivos PHP de `config/` en caché de memoria. Acceso con notación de punto (`config('database.driver')`).
-- **`HttpException`**: excepción tipada con código HTTP que el núcleo convierte automáticamente en respuesta JSON.
+Esta capa existe para comparar comportamiento con y sin protección adicional. En una prueba de rendimiento eso es importante porque permite separar dos escenarios:
 
-### Database (`src/Database/`)
+- una ruta limpia, usada como línea base;
+- una ruta protegida, usada para medir el costo de inspección y bloqueo.
 
-- **`Connection`**: singleton PDO. Inicializa la conexión una vez y la reutiliza. Soporta MySQL, PostgreSQL y SQLite.
-- **`QueryBuilder`**: API fluida para construir SELECT, INSERT, UPDATE, DELETE sin SQL directo. Usa prepared statements internamente.
-- **`BaseRepository`**: clase base de repositorios. Provee `find()`, `findAll()`, `insert()`, `update()`, `delete()` sobre `QueryBuilder`.
-- **`Blueprint`** y **`ColumnDefinition`**: API fluida para definir columnas en migraciones.
-- **`Migration`**: contrato base con métodos `up()` y `down()`.
-- **`Migrator`**: lee archivos de `database/migrations/`, los ordena por timestamp y los ejecuta. Registra el estado en la tabla `jb_migrations`.
-- **`Seeder`**: contrato base con método `run()`.
+Comportamientos importantes:
 
-### Auth (`src/Auth/`)
+- Algunas rutas pueden excluirse del middleware de seguridad.
+- El middleware ejecuta comprobaciones previas antes de que corra el controlador.
+- Los detectores pueden bloquear una petición o permitirla en modo de aprendizaje.
+- Los eventos de seguridad se guardan en las tablas creadas por migración.
 
-- **`JWT`**: generación y validación de tokens con firma HMAC-SHA256. Sin dependencias externas.
-- **`AuthMiddleware`**: extrae el token del header `Authorization: Bearer`, lo valida y carga el payload en el request.
-- **`PermissionMiddleware`**: verifica que el payload del token incluya el permiso requerido para la ruta.
+## Modelo del dominio
 
-### Security (`src/Security/`)
+El dominio actual es intencionalmente pequeño:
 
-Módulo de detección de amenazas y administración de seguridad. Funciona como middleware y como panel REST independiente.
+- `users`
+- `roles`
+- `permissions`
+- `role_permissions`
+- `item_categorias`
+- `items`
+- Tablas de seguridad para bloqueos, bitácoras, puntuaciones, whitelist, blacklist y auditoría
 
-**Detectores** (heredan de `AbstractDetector`):
+La razón de mantener este modelo corto es que el benchmark debe probar una forma de trabajo, no una aplicación rica en negocio. El valor está en la repetición y la comparación.
 
-| Detector | Qué detecta |
-|---|---|
-| `InjectionDetector` | SQL injection, XSS, command injection |
-| `BotDetector` | User-agents de bots y scrapers conocidos |
-| `PathDetector` | Path traversal (`../`) |
-| `PayloadDetector` | Payloads anormalmente grandes o con patrones sospechosos |
-| `LoginDetector` | Fuerza bruta en endpoints de login |
-| `MethodDetector` | Métodos HTTP no permitidos |
-| `NotFoundDetector` | Escaneo de rutas inexistentes |
-| `RateLimitDetector` | Exceso de peticiones por IP |
-| `SessionDetector` | Manipulación de sesión |
+## Controladores
 
-**Servicios:**
+- `HealthController` expone las verificaciones de salud base y segura.
+- `AuthController` maneja el inicio y cierre de sesión con JWT.
+- `ItemController` gestiona el CRUD protegido de items.
+- `PublicItemController` valida un item por UUID.
+- `SecurityTestController` envía payloads por la cadena de seguridad.
+- `AdminResetController` limpia las tablas de seguridad para una corrida nueva.
+- `DeployController` ejecuta migraciones, seeders y comprobaciones de configuración por HTTP.
 
-- `ScoringEngine`: acumula puntuación de riesgo por IP. Cuando supera el umbral configurable, activa un bloqueo automático.
-- `SecurityManager`: orquesta detección, puntuación y bloqueo en una sola llamada.
-- `CsrfService`: generación y validación de tokens CSRF para formularios.
-- `CleanupService`: limpieza periódica de registros de auditoría y bloqueos expirados.
+## Lectura recomendada
 
-**Panel REST** (`/api/security/`): endpoints para consultar logs, gestionar lista negra/blanca y revisar puntuaciones.
+Si quieres entender el sistema en orden, empieza por:
 
-### Console (`src/Console/`)
-
-- **`ConsoleApplication`**: dispatcher central. Lee `$argv[1]` y delega al método correspondiente.
-- **`Generator`**: genera artefactos de código leyendo stubs y reemplazando placeholders.
-- **`ProjectBuilder`**: crea la estructura completa de un proyecto nuevo, incluyendo el `composer.json` del proyecto con referencia path al framework.
-
----
-
-## Flujo HTTP de una petición
-
-```
-Petición HTTP
-	│
-	▼
-public/index.php
-	│  carga autoload, instancia Application
-	▼
-Application::run()
-	│  inicializa Config, Container, Router
-	│  incluye routes/api.php
-	▼
-Router::dispatch()
-	│  empareja método + URL
-	│  ejecuta pila de middleware (FIFO)
-	▼
-Middleware(s)
-	│  Auth, Permission, RateLimit, Security, ...
-	│  cada uno puede interrumpir con HttpException
-	▼
-Controller::método()
-	│  usa modelos/repositorios
-	│  construye array de datos
-	▼
-Response::json()
-	│  serializa a JSON, escribe cabeceras
-	▼
-Respuesta HTTP (application/json)
-```
-
-En caso de excepción en cualquier punto, `Application` la captura y emite una respuesta JSON con el código y mensaje apropiados.
-
----
-
-## Sistema de generación de código
-
-Los stubs son archivos de texto con placeholders que el `Generator` sustituye al crear artefactos:
-
-| Placeholder | Valor |
-|---|---|
-| `{{ClassName}}` | Nombre en PascalCase (`Producto`) |
-| `{{className}}` | Nombre en camelCase (`producto`) |
-| `{{class_name}}` | Nombre en snake_case (`producto`) |
-| `{{table_name}}` | Tabla en snake_case plural (`productos`) |
-| `{{timestamp}}` | Timestamp de migración (`2026_05_12_143022`) |
-| `{{namespace}}` | Namespace del proyecto |
-
-Los stubs pueden publicarse al proyecto con `stub:publish` para editarlos localmente sin modificar el framework.
-
----
-
-## Contenedor de inyección de dependencias
-
-El `Container` es intencional y deliberadamente simple. Soporta:
-
-- **Singleton**: registra una instancia única reutilizable.
-- **Fábrica**: registra un closure que se ejecuta en cada solicitud.
-- **Resolución**: `$container->get(Clase::class)`.
-
-No hace resolución automática de constructores. Las dependencias se registran explícitamente en el bootstrap de la aplicación.
-
----
-
-## Persistencia de migraciones
-
-El `Migrator` mantiene la tabla `jb_migrations` con columnas:
-
-| Columna | Descripción |
-|---|---|
-| `migration` | Nombre del archivo de migración |
-| `batch` | Número de lote de ejecución |
-| `executed_at` | Timestamp de ejecución |
-
-`migrate:rollback` revierte el último lote completo. `migrate:fresh` elimina la tabla y la recrea.
+1. `public/index.php`
+2. `routes/api.php`
+3. `config/app.php`
+4. `config/security.php`
+5. `app/Controllers/HealthController.php`
+6. `app/Controllers/ItemController.php`
+7. `src/Security/SecurityMiddleware.php`
