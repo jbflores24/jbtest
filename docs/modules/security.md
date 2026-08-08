@@ -47,3 +47,9 @@ La limpieza la ejecuta `CleanupService::run()`, invocado al inicio de cada reque
 - sobrecarga de falsos positivos;
 - costos de mantenimiento si el catalogo de detectores crece sin gobernanza;
 - en entornos con `sql_mode` estricto (`STRICT_TRANS_TABLES`), los INSERTs que omitan columnas `NOT NULL` sin `DEFAULT` lanzaran excepcion; el codigo actual garantiza que `ip` y `window_start` siempre se incluyen.
+
+## Relevancia para el experimento
+
+La comparacion experimental entre `SECURITY_ENABLED=true` y `SECURITY_ENABLED=false` depende de este modulo. La ruta publica usada para la medicion (`GET /api/public/items/{uuid}/validar`) no contiene logica de seguridad propia; la diferencia observada proviene de que `Application::run()` introduce o no `SecurityMiddleware` antes del despacho.
+
+El orquestador externo verifica el estado efectivo del interruptor con `GET /api/admin/security-config-check` y puede limpiar el estado de persistencia con `POST /api/admin/reset-security` cuando necesita reiniciar la medicion.

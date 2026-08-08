@@ -69,3 +69,11 @@ Recomendación futura:
 ## Resultado esperado
 
 En una máquina local estándar, el benchmark del Router con cache habilitada debe permanecer por debajo de 2 ms promedio por dispatch del escenario medido.
+
+## Relacion con el testbed experimental
+
+En `jbtest` el rendimiento que se evalua en el Experimento A no es el del Router aislado, sino el impacto agregado de activar o desactivar la cadena global de seguridad sobre un endpoint publico estable:
+
+- `GET /api/public/items/{uuid}/validar`
+
+La comparacion ON/OFF se realiza en `pruebas_jb/` mediante el benchmark HTTP y el orquestador. Esta documentacion local conserva el contexto del framework base y remite a esa metodologia cuando se analizan resultados experimentales.

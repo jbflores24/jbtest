@@ -43,3 +43,16 @@ Targets sugeridos:
 - CodeIgniter
 
 La comparacion debe limitarse a escenarios equivalentes para evitar sesgos.
+
+## Aplicacion al testbed `jbtest`
+
+El experimento de rendimiento asociado a `jbtest` se apoya en estas reglas y las concreta en el siguiente diseno:
+
+- seguridad: ON/OFF
+- concurrencia: 1, 5, 10 y 20
+- repeticiones: 10
+- solicitudes medidas por corrida: 100
+
+La carga se aplica al endpoint publico de validacion `GET /api/public/items/{uuid}/validar`, mientras que la verificacion del estado de la seguridad se realiza con `GET /api/admin/security-config-check`.
+
+La documentacion operacional del experimento se encuentra en `docs/benchmarks/experiment-a.md`, `docs/benchmarks/reproducibility.md` y `docs/benchmarks/traceability.md`.

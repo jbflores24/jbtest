@@ -12,6 +12,11 @@ use App\Controllers\SecurityTestController;
 use Jb\Auth\AuthMiddleware;
 use Jb\Security\SecurityRoutes;
 
+$router->get(
+    '/admin/security-config-check',
+    [DeployController::class, 'securityConfigCheck']
+);
+
 // ── Health (baseline sin middleware de seguridad) ──────────────
 $router->get('/health', [HealthController::class, 'health']);
 

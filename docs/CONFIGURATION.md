@@ -243,3 +243,15 @@ El sistema de `Config` carga los archivos de `config/` bajo demanda y los cachea
 $config = Config::get('database');  // carga config/database.php
 $driver = Config::get('database.driver');  // acceso con notación de punto
 ```
+
+### Variables de entorno relacionadas con los experimentos
+
+El testbed `jbtest` tambien usa variables de entorno para reproducibilidad experimental:
+
+- `SECURITY_ENABLED`: activa o desactiva la cadena global de seguridad.
+- `SECURITY_FAIL_OPEN`: define si un fallo del modulo de seguridad debe permitir o bloquear la solicitud.
+- `SECURITY_LEARNING_MODE`: permite registrar amenazas sin bloquear.
+- `DEPLOY_TOKEN`: protege los endpoints de comprobacion y despliegue sin exponer credenciales internas.
+- `ADMIN_RESET_TOKEN`: protege el reseteo de tablas de seguridad usado en benchmarks.
+
+El valor efectivo de `SECURITY_ENABLED` puede verificarse con `GET /api/admin/security-config-check?token=...`, que devuelve la bandera de entorno y otras variables relacionadas.

@@ -79,6 +79,7 @@ The scaffold command creates the controller, model, migration, seeder, unit test
 - [Roadmap](docs/ROADMAP.md)
 - [Community](docs/COMMUNITY.md)
 - [Internal index](docs/INDEX.md)
+- [Benchmark documentation](docs/benchmarks/README.md)
 
 ## Example project
 
@@ -93,3 +94,4 @@ composer install
 ```
 
 MIT License.
+

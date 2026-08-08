@@ -48,7 +48,7 @@ class SecurityMiddleware
      * Run the security detector pipeline before application routing.
      */
     public function handle(Request $request, Closure $next): Response
-    {
+    {   
         if (!$this->config->enabled() || $this->isExcluded($request)) {
             return $next($request);
         }

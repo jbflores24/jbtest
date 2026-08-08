@@ -140,4 +140,24 @@ class DeployController
             throw new HttpException('Token de despliegue inválido.', 403);
         }
     }
+
+    public function securityConfigCheck(Request $request): Response
+    {
+        $this->validateDeployToken($request);
+
+        return Response::success([
+            'env_SECURITY_ENABLED' =>
+                $_ENV['SECURITY_ENABLED'] ?? '(no definida)',
+
+            'env_SECURITY_FAIL_OPEN' =>
+                $_ENV['SECURITY_FAIL_OPEN'] ?? '(no definida)',
+
+            'env_SECURITY_LEARNING_MODE' =>
+                $_ENV['SECURITY_LEARNING_MODE'] ?? '(no definida)',
+
+            'php_sapi' => PHP_SAPI,
+
+            'time_php' => date('Y-m-d H:i:s'),
+        ]);
+    }
 }
