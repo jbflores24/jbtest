@@ -65,4 +65,4 @@ $router->post('/admin/deploy/seed', [DeployController::class, 'seed']);
 $router->get('/admin/security-scores-check', [DeployController::class, 'securityScoresCheck']);
 
 // ── Rutas del panel de seguridad del framework ─────────────────
-SecurityRoutes::register($router);
+SecurityRoutes::register($router, [AuthMiddleware::class]);
