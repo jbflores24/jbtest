@@ -44,6 +44,12 @@ Si el entorno no permite acceso por shell, usa los endpoints de despliegue defin
 - [docs/endpoints.md](docs/endpoints.md) documenta las rutas expuestas.
 - [docs/testing.md](docs/testing.md) describe cómo se prueban y comparan los escenarios.
 
+## Relación con el estudio
+
+- [jb-framework](https://github.com/jbflores24/jb-framework): repositorio base del framework evaluado.
+- [pruebas_jb](https://github.com/jbflores24/pruebas_jb): artefactos experimentales, trazabilidad y reproducibilidad.
+- [research-2026-v1](https://github.com/jbflores24/jbtest/tree/research-2026-v1): referencia estable de este banco de pruebas.
+
 ## Alcance
 
 Todo lo que se documenta aquí debe existir en `routes/api.php`, `config/`, `database/` o `tests/`. Si una ruta, tabla o variable no está en el código actual, no se debe asumir como parte del testbed.
