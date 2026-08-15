@@ -7,12 +7,12 @@ namespace Jb\Security\models;
 class ScoreModel extends SecurityModel
 {
     /**
-     * Record a hit in a time window and return current attempts.
+     * Registra un hit en una ventana temporal y devuelve los intentos actuales.
      *
-     * @param string $key Logical counter key (e.g. ip, or "login:{ip}")
-     * @param string $ip Real client IP, stored in the `ip` column
-     * @param string $fingerprint Request fingerprint hash
-     * @param int $window Window duration in seconds
+     * @param string $key Clave lógica del contador (por ejemplo, ip o "login:{ip}")
+     * @param string $ip IP real del cliente, almacenada en la columna `ip`
+     * @param string $fingerprint Huella del request
+     * @param int $window Duración de la ventana en segundos
      */
     public function hit(
         string $key,
@@ -81,8 +81,8 @@ class ScoreModel extends SecurityModel
 
         } catch (\PDOException $e) {
             /*
-             * Another concurrent request may have inserted
-             * the score row for this IP/window first.
+             * Otra solicitud concurrente pudo haber insertado
+             * primero la fila de puntuación para esta IP/ventana.
              */
             $existing = $this->pdo()->prepare(
                 'SELECT id
@@ -108,19 +108,19 @@ class ScoreModel extends SecurityModel
             }
 
             /*
-             * Could not persist the hit. Preserve the existing
-             * fail-open behavior of the security subsystem.
+             * No se pudo persistir el hit. Conserva el comportamiento
+             * fail-open existente del subsistema de seguridad.
              */
             return 1;
         }
     }
 
     /**
-     * Atomically increment attempts and return the value produced
-     * by this connection.
+     * Incrementa los intentos de forma atómica y devuelve el valor
+     * producido por esta conexión.
      *
-     * MySQL LAST_INSERT_ID(expr) is connection-scoped, so concurrent
-     * requests cannot overwrite the value returned to this request.
+     * LAST_INSERT_ID(expr) de MySQL es específico de la conexión, por lo que solicitudes concurrentes
+     * no pueden sobrescribir el valor devuelto a esta petición.
      */
     private function incrementAttempts(
         int $id,
@@ -146,7 +146,7 @@ class ScoreModel extends SecurityModel
     }
 
     /**
-     * Return high risk score rows.
+     * Devuelve las filas de puntuación de alto riesgo.
      *
      * @return list<array<string, mixed>>
      */

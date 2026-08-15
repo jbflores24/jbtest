@@ -26,7 +26,7 @@ class SecurityManager
     }
 
     /**
-     * Evaluate persisted allow, deny and active block state.
+     * Evalúa el estado persistido de permitido, denegado y bloqueo activo.
      */
     public function preflight(SecurityRequest $request): ?array
     {
@@ -49,7 +49,7 @@ class SecurityManager
     }
 
     /**
-     * Persist and optionally block a detected threat.
+     * Persiste y, opcionalmente, bloquea una amenaza detectada.
      *
      * @param array{reason: string, score: int, severity: string} $result
      */
@@ -72,7 +72,7 @@ class SecurityManager
     }
 
     /**
-     * Return dashboard stats.
+     * Devuelve estadísticas del panel.
      *
      * @return array<string, mixed>
      */

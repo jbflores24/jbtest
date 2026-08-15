@@ -42,13 +42,13 @@ class LoggingMiddleware {
     }
 
     /**
-     * Obtener IP del cliente
+     * Obtiene la IP del cliente.
      *
      * @param Request $request
      * @return string
      */
     private function getClientIp(Request $request): string {
-        // X-Forwarded-For (puede contener múltiples IPs)
+        // X-Forwarded-For (puede contener varias IPs)
         $forwarded = $request->header('X-Forwarded-For');
         if ($forwarded !== null) {
             $ips = explode(',', $forwarded);
@@ -69,7 +69,7 @@ class LoggingMiddleware {
     }
 
     /**
-     * Validar formato de IP
+     * Valida el formato de IP.
      *
      * @param string $ip
      * @return bool

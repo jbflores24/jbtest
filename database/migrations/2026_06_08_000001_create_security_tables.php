@@ -8,8 +8,8 @@ use Jb\Database\Migration;
 
 return new class (Connection::getInstance()) extends Migration {
     /**
-     * Create security module tables required by the framework core.
-     * These tables are used by Jb\Security\models\* internally.
+     * Crea las tablas del módulo de seguridad que requiere el núcleo del framework.
+     * Estas tablas son usadas internamente por `Jb\Security\models\*`.
      */
     public function up(): void
     {
@@ -73,7 +73,7 @@ return new class (Connection::getInstance()) extends Migration {
     }
 
     /**
-     * Drop security module tables.
+     * Elimina las tablas del módulo de seguridad.
      */
     public function down(): void
     {

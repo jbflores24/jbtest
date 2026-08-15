@@ -7,7 +7,7 @@ namespace Jb\Security\models;
 class BlockModel extends SecurityModel
 {
     /**
-     * Create or refresh an active block.
+     * Crea o refresca un bloqueo activo.
      */
     public function block(
         string $ip,
@@ -78,7 +78,7 @@ class BlockModel extends SecurityModel
     }
 
     /**
-     * Return an active block by IP.
+     * Devuelve un bloqueo activo por IP.
      *
      * @return array<string, mixed>|null
      */
@@ -92,7 +92,7 @@ class BlockModel extends SecurityModel
     }
 
     /**
-     * Deactivate blocks for an IP.
+     * Desactiva los bloqueos de una IP.
      */
     public function unblock(string $ip): int
     {
@@ -103,7 +103,7 @@ class BlockModel extends SecurityModel
     }
 
     /**
-     * List recent active blocks.
+     * Lista bloqueos activos recientes.
      *
      * @return list<array<string, mixed>>
      */

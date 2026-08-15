@@ -16,7 +16,7 @@ class ConsoleApplication
     }
 
     /**
-     * Run the CLI command.
+     * Ejecuta el comando de la CLI.
      *
      * @param list<string> $argv
      */
@@ -85,8 +85,8 @@ class ConsoleApplication
     }
 
     /**
-     * Singularize a table name to its PascalCase class name.
-     * Example: "estudiantes" -> "Estudiante", "alumno_cursos" -> "AlumnoCurso"
+     * Convierte un nombre de tabla en su nombre de clase PascalCase en singular.
+     * Ejemplo: "estudiantes" -> "Estudiante", "alumno_cursos" -> "AlumnoCurso"
      */
     private function singularize(string $name): string
     {
@@ -199,7 +199,7 @@ class ConsoleApplication
             $lines[] = '  ' . $path . ':';
             foreach ($methods as $method) {
                 $lines[] = '    ' . strtolower($method) . ':';
-                $lines[] = '      summary: Generated route';
+                $lines[] = '      summary: Ruta generada';
                 $lines[] = '      responses:';
                 $lines[] = '        "200":';
                 $lines[] = '          description: OK';
@@ -207,7 +207,7 @@ class ConsoleApplication
         }
 
         file_put_contents($target, implode(PHP_EOL, $lines) . PHP_EOL);
-        $this->line('Documentacion generada en docs/swagger.yaml');
+        $this->line('Documentación generada en docs/swagger.yaml');
 
         return 0;
     }
